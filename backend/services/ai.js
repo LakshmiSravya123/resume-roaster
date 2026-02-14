@@ -1,7 +1,5 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
+const MODEL = process.env.AI_MODEL || 'llama3.2:3b';
 
 const ROAST_LEVELS = {
   mild: 'Be constructive and encouraging, but point out areas for improvement gently.',
@@ -9,10 +7,32 @@ const ROAST_LEVELS = {
   savage: 'Be brutally honest with sharp wit. Roast the weak points hard, but still provide actionable advice. Think Gordon Ramsay reviewing a resume.'
 };
 
+async function callAI(prompt) {
+  const res = await fetch(`${OLLAMA_URL}/api/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: MODEL, prompt, stream: false }),
+  });
+
+  if (!res.ok) throw new Error(`Ollama error: ${res.status}`);
+  const data = await res.json();
+  return data.response;
+}
+
+function parseJSON(text) {
+  try {
+    return JSON.parse(text.trim());
+  } catch {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+    throw new Error('Failed to parse AI response');
+  }
+}
+
 async function analyzeResume(resumeText, targetRole, roastLevel) {
   const roastStyle = ROAST_LEVELS[roastLevel] || ROAST_LEVELS.medium;
 
-  const result = await model.generateContent(`You are Resume Roaster, an expert career coach and resume reviewer.
+  const text = await callAI(`You are Resume Roaster, an expert career coach and resume reviewer.
 
 TARGET ROLE: ${targetRole}
 ROAST LEVEL: ${roastLevel}
@@ -41,19 +61,9 @@ Analyze this resume and respond in EXACTLY this JSON format:
 RESUME:
 ${resumeText}
 
-Respond with ONLY valid JSON, no markdown.`);
+Respond with ONLY valid JSON, no markdown, no explanation.`);
 
-  const text = result.response.text().trim();
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
-    throw new Error('Failed to parse AI response');
-  }
+  return parseJSON(text);
 }
 
 module.exports = { analyzeResume };
