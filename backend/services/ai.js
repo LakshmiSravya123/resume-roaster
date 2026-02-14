@@ -1,6 +1,7 @@
-const Anthropic = require('@anthropic-ai/sdk');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-const client = new Anthropic();
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
 const ROAST_LEVELS = {
   mild: 'Be constructive and encouraging, but point out areas for improvement gently.',
@@ -11,13 +12,7 @@ const ROAST_LEVELS = {
 async function analyzeResume(resumeText, targetRole, roastLevel) {
   const roastStyle = ROAST_LEVELS[roastLevel] || ROAST_LEVELS.medium;
 
-  const message = await client.messages.create({
-    model: 'claude-sonnet-4-5-20250929',
-    max_tokens: 4000,
-    messages: [
-      {
-        role: 'user',
-        content: `You are Resume Roaster, an expert career coach and resume reviewer.
+  const result = await model.generateContent(`You are Resume Roaster, an expert career coach and resume reviewer.
 
 TARGET ROLE: ${targetRole}
 ROAST LEVEL: ${roastLevel}
@@ -46,17 +41,13 @@ Analyze this resume and respond in EXACTLY this JSON format:
 RESUME:
 ${resumeText}
 
-Respond with ONLY valid JSON, no markdown.`
-      }
-    ]
-  });
+Respond with ONLY valid JSON, no markdown.`);
 
-  const text = message.content[0].text.trim();
+  const text = result.response.text().trim();
 
   try {
     return JSON.parse(text);
   } catch {
-    // If JSON parsing fails, try to extract JSON from the response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       return JSON.parse(jsonMatch[0]);
