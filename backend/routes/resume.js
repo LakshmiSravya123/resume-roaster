@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
-const { analyzeResume } = require('../services/ai');
+const { analyzeResume, transformResume } = require('../services/ai');
 const { extractText } = require('../services/parser');
 
 const router = express.Router();
@@ -49,6 +49,7 @@ router.post('/upload', upload.single('resume'), async (req, res) => {
     res.json({
       success: true,
       filename: req.file.originalname,
+      resumeText,
       analysis
     });
   } catch (err) {
@@ -74,11 +75,36 @@ router.post('/text', async (req, res) => {
 
     res.json({
       success: true,
+      resumeText,
       analysis
     });
   } catch (err) {
     console.error('Text analysis error:', err);
     res.status(500).json({ error: err.message || 'Failed to analyze resume' });
+  }
+});
+
+// POST /api/resume/transform - Transform resume into professional version
+router.post('/transform', async (req, res) => {
+  try {
+    const { resumeText, targetRole } = req.body;
+
+    if (!resumeText || resumeText.trim().length < 50) {
+      return res.status(400).json({ error: 'Resume text must be at least 50 characters' });
+    }
+
+    const transformation = await transformResume(
+      resumeText,
+      targetRole || 'Software Engineer'
+    );
+
+    res.json({
+      success: true,
+      transformation
+    });
+  } catch (err) {
+    console.error('Transform error:', err);
+    res.status(500).json({ error: err.message || 'Failed to transform resume' });
   }
 });
 

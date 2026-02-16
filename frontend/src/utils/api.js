@@ -33,3 +33,18 @@ export async function analyzeText(resumeText, targetRole, roastLevel) {
 
   return res.json();
 }
+
+export async function transformResume(resumeText, targetRole) {
+  const res = await fetch(`${API_BASE}/transform`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ resumeText, targetRole }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'Transform failed');
+  }
+
+  return res.json();
+}

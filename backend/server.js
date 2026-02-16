@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 const resumeRoutes = require('./routes/resume');
 
 dotenv.config();
@@ -15,6 +16,12 @@ app.use('/api/resume', resumeRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'resume-roaster' });
+});
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {

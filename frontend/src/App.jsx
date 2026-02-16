@@ -5,7 +5,7 @@ import Loading from './components/Loading';
 import { uploadResume, analyzeText } from './utils/api';
 
 export default function App() {
-  const [state, setState] = useState('idle'); // idle | loading | results | error
+  const [state, setState] = useState('idle');
   const [results, setResults] = useState(null);
   const [error, setError] = useState('');
 
@@ -20,6 +20,7 @@ export default function App() {
       } else {
         data = await analyzeText(resumeText, targetRole, roastLevel);
       }
+      data.targetRole = targetRole;
       setResults(data);
       setState('results');
     } catch (err) {
@@ -37,8 +38,8 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>🔥 Resume Roaster</h1>
-        <p>Upload your resume. Get brutally honest AI feedback.</p>
+        <h1>Resume Roaster</h1>
+        <p>Upload your resume. Get elite-level AI feedback based on Harvard & FAANG standards.</p>
       </header>
 
       {state === 'idle' && (
@@ -50,7 +51,7 @@ export default function App() {
       {state === 'error' && (
         <div style={{ textAlign: 'center', padding: '2rem' }}>
           <p style={{ color: 'var(--danger)', fontSize: '1.1rem', marginBottom: '1rem' }}>
-            ❌ {error}
+            {error}
           </p>
           <button className="reset-btn" onClick={handleReset}>Try Again</button>
         </div>
