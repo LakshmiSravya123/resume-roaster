@@ -1,3 +1,12 @@
+---
+title: Resume Roaster
+emoji: 🔥
+colorFrom: red
+colorTo: yellow
+sdk: docker
+pinned: false
+---
+
 # Resume Roaster
 
 AI-powered resume feedback tool. Upload your resume, get brutally honest feedback + actionable improvements.
